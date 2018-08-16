@@ -1,11 +1,18 @@
 { stdenv
 , fetchurl
+, lib
 , gmp
 , zlib
 , ncurses5
 }:
 let
-  dynamic-linker = "${stdenv.glibc.out}/lib/ld-linux-x86-64.so.2";
+  dynamic-linker = stdenv.cc.bintools.dynamicLinker;
+
+  libPath = lib.makeLibraryPath [
+    gmp
+    ncurses5
+    zlib
+  ];
 in
 stdenv.mkDerivation rec {
   name = "purescript-${version}";
@@ -27,6 +34,6 @@ stdenv.mkDerivation rec {
   postFixup = ''
     patchelf --set-interpreter ${dynamic-linker} $out/bin/purs
     patchelf --shrink-rpath $out/bin/purs
-    patchelf --set-rpath ${zlib}/lib:${gmp}/lib:${ncurses5}/lib $out/bin/purs
+    patchelf --set-rpath "${libPath}" $out/bin/purs
   '';
 }
